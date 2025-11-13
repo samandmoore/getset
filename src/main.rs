@@ -53,18 +53,10 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
     // Print the title
     println!("{}", cmd_entry.title);
 
-    // Split command into program and args
-    let parts: Vec<&str> = cmd_entry.command.split_whitespace().collect();
-    if parts.is_empty() {
-        return Err("Empty command".to_string());
-    }
-
-    let program = parts[0];
-    let args = &parts[1..];
-
-    // Start the command
-    let mut child = Command::new(program)
-        .args(args)
+    // Execute command through shell to support multiline scripts and shell features
+    let mut child = Command::new("sh")
+        .arg("-c")
+        .arg(&cmd_entry.command)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
