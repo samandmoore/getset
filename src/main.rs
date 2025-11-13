@@ -50,8 +50,8 @@ fn main() {
 }
 
 fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
-    // Print the title
-    println!("{}", cmd_entry.title);
+    // Print the title (bold and grey)
+    println!("\x1B[1m\x1B[90m{}\x1B[0m", cmd_entry.title);
 
     // Execute command through shell to support multiline scripts and shell features
     let mut child = Command::new("sh")
@@ -97,8 +97,8 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
             print!("\x1B[2K"); // Clear the line
         }
 
-        // Print title with success emoji
-        println!("{} ✓", cmd_entry.title);
+        // Print title with success emoji (title: bold grey, check: green)
+        println!("\x1B[1m\x1B[90m{}\x1B[0m \x1B[32m✓\x1B[0m", cmd_entry.title);
         Ok(())
     } else {
         // Move cursor back to title line (don't clear output, just update title)
@@ -106,9 +106,9 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
             print!("\x1B[1A"); // Move cursor up one line
         }
 
-        // Clear and reprint title with failure marker
+        // Clear and reprint title with failure marker (title: bold grey, x: red)
         print!("\x1B[2K"); // Clear the line
-        println!("{} ✗", cmd_entry.title);
+        println!("\x1B[1m\x1B[90m{}\x1B[0m \x1B[31m✗\x1B[0m", cmd_entry.title);
 
         // Move cursor back to end of output
         for _ in 0..output_lines.len() {
