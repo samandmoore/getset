@@ -5,7 +5,7 @@ commands:
     command: |
       i=0
 
-      while [ $i -le 10 ]
+      while [ $i -le 4 ]
       do
         echo Number: $i
         sleep $i
