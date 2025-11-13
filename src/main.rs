@@ -1,7 +1,7 @@
 use clap::Parser;
 use serde::Deserialize;
 use std::fs;
-use std::io::{BufRead, BufReader};
+use std::io::{self, BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::path::PathBuf;
 
@@ -101,6 +101,21 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
         println!("{} ✓", cmd_entry.title);
         Ok(())
     } else {
+        // Move cursor back to title line (don't clear output, just update title)
+        for _ in 0..=output_lines.len() {
+            print!("\x1B[1A"); // Move cursor up one line
+        }
+
+        // Clear and reprint title with failure marker
+        print!("\x1B[2K"); // Clear the line
+        println!("{} ✗", cmd_entry.title);
+
+        // Move cursor back to end of output
+        for _ in 0..output_lines.len() {
+            print!("\x1B[1B"); // Move cursor down one line
+        }
+
+        io::stdout().flush().unwrap();
         Err(format!("Command exited with status: {}", status))
     }
 }
