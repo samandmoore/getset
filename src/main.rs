@@ -1,12 +1,12 @@
 use clap::Parser;
+use indicatif::{ProgressBar, ProgressStyle};
 use serde::Deserialize;
 use std::fs;
 use std::io::{BufRead, BufReader};
-use std::process::{Command, Stdio};
 use std::path::PathBuf;
+use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::thread;
-use indicatif::{ProgressBar, ProgressStyle};
 
 #[derive(Parser)]
 #[command(name = "getset")]
@@ -37,17 +37,15 @@ fn main() {
     let cli = Cli::parse();
 
     // Read and parse YAML file
-    let yaml_content = fs::read_to_string(&cli.file)
-        .unwrap_or_else(|e| {
-            eprintln!("Error reading file: {}", e);
-            std::process::exit(1);
-        });
+    let yaml_content = fs::read_to_string(&cli.file).unwrap_or_else(|e| {
+        eprintln!("Error reading file: {}", e);
+        std::process::exit(1);
+    });
 
-    let config: Config = serde_yaml::from_str(&yaml_content)
-        .unwrap_or_else(|e| {
-            eprintln!("Error parsing YAML: {}", e);
-            std::process::exit(1);
-        });
+    let config: Config = serde_yaml::from_str(&yaml_content).unwrap_or_else(|e| {
+        eprintln!("Error parsing YAML: {}", e);
+        std::process::exit(1);
+    });
 
     // Run commands sequentially
     for cmd_entry in config.commands {
@@ -63,10 +61,11 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
     let pb = ProgressBar::new_spinner();
     pb.set_style(
         ProgressStyle::default_spinner()
-            .template("{spinner:.dim} {msg}")
-            .unwrap()
+            .template("{prefix} {spinner:.dim}\n{msg}")
+            .unwrap(),
     );
-    pb.set_message(format!("\x1B[1m\x1B[90m{}\x1B[0m", cmd_entry.title));
+    pb.set_prefix(format!("\x1B[1m\x1B[90m{}\x1B[0m", cmd_entry.title));
+    pb.set_message("");
     pb.enable_steady_tick(std::time::Duration::from_millis(100));
 
     // Execute command through shell to support multiline scripts and shell features
@@ -87,9 +86,8 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
     thread::spawn(move || {
         let reader = BufReader::new(stdout);
         for line in reader.lines() {
-            if let Ok(line) = line {
-                let _ = tx_stdout.send(Output::Stdout(line));
-            }
+            let Ok(line) = line else { continue };
+            let _ = tx_stdout.send(Output::Stdout(line));
         }
     });
 
@@ -99,9 +97,8 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
     thread::spawn(move || {
         let reader = BufReader::new(stderr);
         for line in reader.lines() {
-            if let Ok(line) = line {
-                let _ = tx_stderr.send(Output::Stderr(line));
-            }
+            let Ok(line) = line else { continue };
+            let _ = tx_stderr.send(Output::Stderr(line));
         }
     });
 
@@ -115,28 +112,21 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
     for output in rx {
         match output {
             Output::Stdout(line) => {
-                // Update spinner message with title and latest line
-                pb.set_message(format!(
-                    "\x1B[1m\x1B[90m{}\x1B[0m {}",
-                    cmd_entry.title,
-                    line
-                ));
+                // Update spinner message with latest line
+                pb.set_message(line.clone());
                 output_lines.push(line);
             }
             Output::Stderr(line) => {
-                // Update spinner message with title and latest line
-                pb.set_message(format!(
-                    "\x1B[1m\x1B[90m{}\x1B[0m {}",
-                    cmd_entry.title,
-                    line
-                ));
+                // Update spinner message with latest line
+                pb.set_message(line.clone());
                 output_lines.push(line);
             }
         }
     }
 
     // Wait for command to complete
-    let status = child.wait()
+    let status = child
+        .wait()
         .map_err(|e| format!("Failed to wait for command: {}", e))?;
 
     if status.success() {
