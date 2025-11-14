@@ -4,6 +4,8 @@ use std::fs;
 use std::io::{self, BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 use std::path::PathBuf;
+use std::sync::mpsc;
+use std::thread;
 
 #[derive(Parser)]
 #[command(name = "getset")]
@@ -22,6 +24,12 @@ struct Config {
 struct CommandEntry {
     title: String,
     command: String,
+}
+
+#[derive(Debug)]
+enum Output {
+    Stdout(String),
+    Stderr(String),
 }
 
 fn main() {
@@ -62,26 +70,50 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
         .spawn()
         .map_err(|e| format!("Failed to spawn command: {}", e))?;
 
+    // Create a channel for output
+    let (tx, rx) = mpsc::channel();
+
+    // Spawn thread for stdout
+    let stdout = child.stdout.take().expect("Failed to capture stdout");
+    let tx_stdout = tx.clone();
+    thread::spawn(move || {
+        let reader = BufReader::new(stdout);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                let _ = tx_stdout.send(Output::Stdout(line));
+            }
+        }
+    });
+
+    // Spawn thread for stderr
+    let stderr = child.stderr.take().expect("Failed to capture stderr");
+    let tx_stderr = tx.clone();
+    thread::spawn(move || {
+        let reader = BufReader::new(stderr);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                let _ = tx_stderr.send(Output::Stderr(line));
+            }
+        }
+    });
+
+    // Drop the original sender so the channel closes when both threads finish
+    drop(tx);
+
     // Capture output lines for potential clearing
     let mut output_lines = Vec::new();
 
-    // Stream stdout
-    if let Some(stdout) = child.stdout.take() {
-        let reader = BufReader::new(stdout);
-        for line in reader.lines() {
-            let line = line.map_err(|e| format!("Error reading stdout: {}", e))?;
-            println!("{}", line);
-            output_lines.push(line);
-        }
-    }
-
-    // Stream stderr
-    if let Some(stderr) = child.stderr.take() {
-        let reader = BufReader::new(stderr);
-        for line in reader.lines() {
-            let line = line.map_err(|e| format!("Error reading stderr: {}", e))?;
-            eprintln!("{}", line);
-            output_lines.push(line);
+    // Receive and print output as it arrives
+    for output in rx {
+        match output {
+            Output::Stdout(line) => {
+                println!("{}", line);
+                output_lines.push(line);
+            }
+            Output::Stderr(line) => {
+                eprintln!("{}", line);
+                output_lines.push(line);
+            }
         }
     }
 
