@@ -1,11 +1,12 @@
 use clap::Parser;
 use serde::Deserialize;
 use std::fs;
-use std::io::{self, BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use std::path::PathBuf;
 use std::sync::mpsc;
 use std::thread;
+use indicatif::{ProgressBar, ProgressStyle};
 
 #[derive(Parser)]
 #[command(name = "getset")]
@@ -58,8 +59,15 @@ fn main() {
 }
 
 fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
-    // Print the title (bold and grey)
-    println!("\x1B[1m\x1B[90m{}\x1B[0m", cmd_entry.title);
+    // Create a spinner with the title
+    let pb = ProgressBar::new_spinner();
+    pb.set_style(
+        ProgressStyle::default_spinner()
+            .template("{spinner:.dim} {msg}")
+            .unwrap()
+    );
+    pb.set_message(format!("\x1B[1m\x1B[90m{}\x1B[0m", cmd_entry.title));
+    pb.enable_steady_tick(std::time::Duration::from_millis(100));
 
     // Execute command through shell to support multiline scripts and shell features
     let mut child = Command::new("sh")
@@ -100,18 +108,28 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
     // Drop the original sender so the channel closes when both threads finish
     drop(tx);
 
-    // Capture output lines for potential clearing
+    // Capture all output lines for potential display on failure
     let mut output_lines = Vec::new();
 
-    // Receive and print output as it arrives
+    // Receive and update spinner with the latest output line
     for output in rx {
         match output {
             Output::Stdout(line) => {
-                println!("{}", line);
+                // Update spinner message with title and latest line
+                pb.set_message(format!(
+                    "\x1B[1m\x1B[90m{}\x1B[0m {}",
+                    cmd_entry.title,
+                    line
+                ));
                 output_lines.push(line);
             }
             Output::Stderr(line) => {
-                eprintln!("{}", line);
+                // Update spinner message with title and latest line
+                pb.set_message(format!(
+                    "\x1B[1m\x1B[90m{}\x1B[0m {}",
+                    cmd_entry.title,
+                    line
+                ));
                 output_lines.push(line);
             }
         }
@@ -122,32 +140,20 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
         .map_err(|e| format!("Failed to wait for command: {}", e))?;
 
     if status.success() {
-        // Clear the output lines (move cursor up and clear each line)
-        let lines_to_clear = output_lines.len() + 1; // +1 for title
-        for _ in 0..lines_to_clear {
-            print!("\x1B[1A"); // Move cursor up one line
-            print!("\x1B[2K"); // Clear the line
-        }
-
-        // Print title with success emoji (title: bold grey, check: green)
+        // Clear the spinner and print title with success emoji
+        pb.finish_and_clear();
         println!("\x1B[1m\x1B[90m{}\x1B[0m \x1B[32m✓\x1B[0m", cmd_entry.title);
         Ok(())
     } else {
-        // Move cursor back to title line (don't clear output, just update title)
-        for _ in 0..=output_lines.len() {
-            print!("\x1B[1A"); // Move cursor up one line
-        }
-
-        // Clear and reprint title with failure marker (title: bold grey, x: red)
-        print!("\x1B[2K"); // Clear the line
+        // Clear the spinner and print title with failure marker
+        pb.finish_and_clear();
         println!("\x1B[1m\x1B[90m{}\x1B[0m \x1B[31m✗\x1B[0m", cmd_entry.title);
 
-        // Move cursor back to end of output
-        for _ in 0..output_lines.len() {
-            print!("\x1B[1B"); // Move cursor down one line
+        // Print all output for debugging
+        for line in output_lines {
+            println!("{}", line);
         }
 
-        io::stdout().flush().unwrap();
         Err(format!("Command exited with status: {}", status))
     }
 }
