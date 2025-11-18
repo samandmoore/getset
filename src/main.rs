@@ -61,7 +61,7 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
     let pb = ProgressBar::new_spinner();
     pb.set_style(
         ProgressStyle::default_spinner()
-            .template("{prefix} {spinner:.dim}\n{msg}")
+            .template("{spinner:.dim} {prefix}\n{msg}")
             .unwrap(),
     );
     pb.set_prefix(format!("\x1B[1m\x1B[90m{}\x1B[0m", cmd_entry.title));
@@ -132,12 +132,12 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
     if status.success() {
         // Clear the spinner and print title with success emoji
         pb.finish_and_clear();
-        println!("\x1B[1m\x1B[90m{}\x1B[0m \x1B[32m✓\x1B[0m", cmd_entry.title);
+        println!("\x1B[32m✓\x1B[0m \x1B[1m\x1B[90m{}\x1B[0m", cmd_entry.title);
         Ok(())
     } else {
         // Clear the spinner and print title with failure marker
         pb.finish_and_clear();
-        println!("\x1B[1m\x1B[90m{}\x1B[0m \x1B[31m✗\x1B[0m", cmd_entry.title);
+        println!("\x1B[31m✗\x1B[0m \x1B[1m\x1B[90m{}\x1B[0m", cmd_entry.title);
 
         // Print all output for debugging
         for line in output_lines {
