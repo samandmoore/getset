@@ -15,10 +15,6 @@ use std::time::Instant;
 struct Cli {
     /// Path to the YAML file containing commands
     file: PathBuf,
-
-    /// Show timing information for each command
-    #[arg(long)]
-    timings: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -54,14 +50,14 @@ fn main() {
 
     // Run commands sequentially
     for cmd_entry in config.commands {
-        if let Err(e) = run_command(&cmd_entry, cli.timings) {
+        if let Err(e) = run_command(&cmd_entry) {
             eprintln!("\nCommand failed: {}", e);
             std::process::exit(1);
         }
     }
 }
 
-fn run_command(cmd_entry: &CommandEntry, show_timings: bool) -> Result<(), String> {
+fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
     // Start timing
     let start = Instant::now();
 
@@ -143,15 +139,11 @@ fn run_command(cmd_entry: &CommandEntry, show_timings: bool) -> Result<(), Strin
 
         // Clear the spinner and print title with success emoji
         pb.finish_and_clear();
-        if show_timings {
-            println!(
-                "\x1B[32m✓\x1B[0m \x1B[1m\x1B[90m{}\x1B[0m \x1B[2m({:.2}s)\x1B[0m",
-                cmd_entry.title,
-                elapsed.as_secs_f64()
-            );
-        } else {
-            println!("\x1B[32m✓\x1B[0m \x1B[1m\x1B[90m{}\x1B[0m", cmd_entry.title);
-        }
+        println!(
+            "\x1B[32m✓\x1B[0m \x1B[1m\x1B[90m{}\x1B[0m \x1B[2m({:.2}s)\x1B[0m",
+            cmd_entry.title,
+            elapsed.as_secs_f64()
+        );
         Ok(())
     } else {
         // Calculate elapsed time
@@ -159,15 +151,11 @@ fn run_command(cmd_entry: &CommandEntry, show_timings: bool) -> Result<(), Strin
 
         // Clear the spinner and print title with failure marker
         pb.finish_and_clear();
-        if show_timings {
-            println!(
-                "\x1B[31m✗\x1B[0m \x1B[1m\x1B[90m{}\x1B[0m \x1B[2m({:.2}s)\x1B[0m",
-                cmd_entry.title,
-                elapsed.as_secs_f64()
-            );
-        } else {
-            println!("\x1B[31m✗\x1B[0m \x1B[1m\x1B[90m{}\x1B[0m", cmd_entry.title);
-        }
+        println!(
+            "\x1B[31m✗\x1B[0m \x1B[1m\x1B[90m{}\x1B[0m \x1B[2m({:.2}s)\x1B[0m",
+            cmd_entry.title,
+            elapsed.as_secs_f64()
+        );
 
         // Print all output for debugging
         for line in output_lines {
