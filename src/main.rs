@@ -49,8 +49,8 @@ fn main() {
     });
 
     // Run commands sequentially
-    for cmd_entry in config.commands {
-        if let Err(e) = run_command(&cmd_entry) {
+    for cmd_entry in config.commands.iter() {
+        if let Err(e) = run_command(cmd_entry) {
             eprintln!("\nCommand failed: {}", e);
             std::process::exit(1);
         }
@@ -61,16 +61,15 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
     // Start timing
     let start = Instant::now();
 
-    // Create a spinner with the title
+    // Create a progress bar with spinner
     let pb = ProgressBar::new_spinner();
     pb.set_style(
         ProgressStyle::default_spinner()
-            .template("{spinner:.dim} {prefix}\n{msg}")
+            .template("{spinner:.dim} {msg:.bold.dim}")
             .unwrap(),
     );
-    pb.set_prefix(format!("\x1B[1m\x1B[90m{}\x1B[0m", cmd_entry.title));
-    pb.set_message("");
-    pb.enable_steady_tick(std::time::Duration::from_millis(100));
+    pb.set_message(cmd_entry.title.clone());
+    pb.enable_steady_tick(std::time::Duration::from_millis(80));
 
     // Execute command through shell to support multiline scripts and shell features
     let mut child = Command::new("sh")
@@ -109,21 +108,11 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
     // Drop the original sender so the channel closes when both threads finish
     drop(tx);
 
-    // Capture all output lines for potential display on failure
-    let mut output_lines = Vec::new();
-
-    // Receive and update spinner with the latest output line
+    // Receive and print output in real-time
     for output in rx {
         match output {
-            Output::Stdout(line) => {
-                // Update spinner message with latest line
-                pb.set_message(line.clone());
-                output_lines.push(line);
-            }
-            Output::Stderr(line) => {
-                // Update spinner message with latest line
-                pb.set_message(line.clone());
-                output_lines.push(line);
+            Output::Stdout(line) | Output::Stderr(line) => {
+                pb.println(line);
             }
         }
     }
@@ -133,35 +122,24 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
         .wait()
         .map_err(|e| format!("Failed to wait for command: {}", e))?;
 
-    if status.success() {
-        // Calculate elapsed time
-        let elapsed = start.elapsed();
+    // Calculate elapsed time
+    let elapsed = start.elapsed();
 
-        // Clear the spinner and print title with success emoji
-        pb.finish_and_clear();
-        println!(
-            "\x1B[32m✓\x1B[0m \x1B[1m\x1B[90m{}\x1B[0m \x1B[2m({:.2}s)\x1B[0m",
-            cmd_entry.title,
-            elapsed.as_secs_f64()
-        );
+    if status.success() {
+        pb.finish_with_message(format!(
+            "{} {} {}",
+            console::style("✓").green(),
+            console::style(&cmd_entry.title).bold().dim(),
+            console::style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
+        ));
         Ok(())
     } else {
-        // Calculate elapsed time
-        let elapsed = start.elapsed();
-
-        // Clear the spinner and print title with failure marker
-        pb.finish_and_clear();
-        println!(
-            "\x1B[31m✗\x1B[0m \x1B[1m\x1B[90m{}\x1B[0m \x1B[2m({:.2}s)\x1B[0m",
-            cmd_entry.title,
-            elapsed.as_secs_f64()
-        );
-
-        // Print all output for debugging
-        for line in output_lines {
-            println!("{}", line);
-        }
-
+        pb.finish_with_message(format!(
+            "{} {} {}",
+            console::style("✗").red(),
+            console::style(&cmd_entry.title).bold().dim(),
+            console::style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
+        ));
         Err(format!("Command exited with status: {}", status))
     }
 }
