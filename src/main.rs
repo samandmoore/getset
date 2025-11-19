@@ -7,7 +7,6 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::thread;
-use std::time::Instant;
 
 #[derive(Parser)]
 #[command(name = "getset")]
@@ -58,9 +57,6 @@ fn main() {
 }
 
 fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
-    // Start timing
-    let start = Instant::now();
-
     // Create a progress bar with spinner
     let pb = ProgressBar::new_spinner();
     pb.set_style(
@@ -123,7 +119,7 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
         .map_err(|e| format!("Failed to wait for command: {}", e))?;
 
     // Calculate elapsed time
-    let elapsed = start.elapsed();
+    let elapsed = pb.elapsed();
 
     if status.success() {
         pb.finish_with_message(format!(
