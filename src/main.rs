@@ -122,6 +122,8 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
     let elapsed = pb.elapsed();
 
     if status.success() {
+        // TODO: replace with custom ProgressTracker for elapsed time that has this higher
+        // precision
         pb.finish_with_message(format!(
             "{} {} {}",
             console::style("✓").green(),
