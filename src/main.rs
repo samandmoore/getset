@@ -11,6 +11,10 @@ use std::time::Instant;
 struct Cli {
     /// Path to the YAML file containing commands
     file: PathBuf,
+
+    /// Show verbose logging
+    #[arg(long)]
+    verbose: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -38,16 +42,33 @@ fn main() {
         std::process::exit(1);
     });
 
-    // Run commands sequentially
+    let timer = Instant::now();
+
     for cmd_entry in config.commands.iter() {
-        if let Err(e) = run_command(cmd_entry) {
-            eprintln!("\nCommand failed: {}", e);
+        if let Err(e) = run_command(cmd_entry, cli.verbose) {
+            eprintln!(
+                "\n{} A command failed",
+                console::style("Error:").red().bold(),
+            );
+
+            if cli.verbose {
+                eprintln!("{}", console::style(e).red());
+            }
             std::process::exit(1);
         }
     }
+
+    let elapsed = timer.elapsed();
+
+    println!("{}", console::style("│").dim());
+    println!(
+        "{} All set! {}",
+        console::style("└─▶").dim(),
+        console::style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
+    );
 }
 
-fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
+fn run_command(cmd_entry: &CommandEntry, verbose: bool) -> Result<(), String> {
     let timer = Instant::now();
     let (_, pts) = pty_process::blocking::open().unwrap();
 
@@ -56,6 +77,10 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
         console::style("===>").bold().dim(),
         console::style(&cmd_entry.title).bold().dim()
     );
+
+    if verbose {
+        println!("{}", console::style(&cmd_entry.command).yellow().dim());
+    }
 
     // Execute command through shell to support multiline scripts and shell features
     let mut child = pty_process::blocking::Command::new("sh")
