@@ -31,7 +31,6 @@ struct CommandEntry {
 fn main() {
     let cli = Cli::parse();
 
-    // Read and parse YAML file
     let yaml_content = fs::read_to_string(&cli.file).unwrap_or_else(|e| {
         eprintln!("Error reading file: {}", e);
         std::process::exit(1);
@@ -97,7 +96,6 @@ fn run_command(cmd_entry: &CommandEntry, verbose: bool) -> Result<(), String> {
         .wait()
         .map_err(|e| format!("Failed to wait for command: {}", e))?;
 
-    // Calculate elapsed time
     let elapsed = timer.elapsed();
 
     if status.success() {
