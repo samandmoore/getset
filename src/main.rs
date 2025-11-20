@@ -1,12 +1,9 @@
 use clap::Parser;
-use indicatif::{ProgressBar, ProgressStyle};
 use serde::Deserialize;
 use std::fs;
-use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
-use std::sync::mpsc;
-use std::thread;
+use std::process::Stdio;
+use std::time::Instant;
 
 #[derive(Parser)]
 #[command(name = "getset")]
@@ -25,12 +22,6 @@ struct Config {
 struct CommandEntry {
     title: String,
     command: String,
-}
-
-#[derive(Debug)]
-enum Output {
-    Stdout(String),
-    Stderr(String),
 }
 
 fn main() {
@@ -57,61 +48,24 @@ fn main() {
 }
 
 fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
-    // Create a progress bar with spinner
-    let pb = ProgressBar::new_spinner();
-    pb.set_style(
-        ProgressStyle::default_spinner()
-            .template("{spinner:.dim} {msg:.bold.dim}")
-            .unwrap(),
+    let timer = Instant::now();
+    let (_, pts) = pty_process::blocking::open().unwrap();
+
+    println!(
+        "{} {}",
+        console::style("===>").bold().dim(),
+        console::style(&cmd_entry.title).bold().dim()
     );
-    pb.set_message(cmd_entry.title.clone());
-    pb.enable_steady_tick(std::time::Duration::from_millis(80));
 
     // Execute command through shell to support multiline scripts and shell features
-    let mut child = Command::new("sh")
+    let mut child = pty_process::blocking::Command::new("sh")
         .arg("-c")
         .arg(&cmd_entry.command)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn(pts)
         .map_err(|e| format!("Failed to spawn command: {}", e))?;
-
-    // Create a channel for output
-    let (tx, rx) = mpsc::channel();
-
-    // Spawn thread for stdout
-    let stdout = child.stdout.take().expect("Failed to capture stdout");
-    let tx_stdout = tx.clone();
-    thread::spawn(move || {
-        let reader = BufReader::new(stdout);
-        for line in reader.lines() {
-            let Ok(line) = line else { continue };
-            let _ = tx_stdout.send(Output::Stdout(line));
-        }
-    });
-
-    // Spawn thread for stderr
-    let stderr = child.stderr.take().expect("Failed to capture stderr");
-    let tx_stderr = tx.clone();
-    thread::spawn(move || {
-        let reader = BufReader::new(stderr);
-        for line in reader.lines() {
-            let Ok(line) = line else { continue };
-            let _ = tx_stderr.send(Output::Stderr(line));
-        }
-    });
-
-    // Drop the original sender so the channel closes when both threads finish
-    drop(tx);
-
-    // Receive and print output in real-time
-    for output in rx {
-        match output {
-            Output::Stdout(line) | Output::Stderr(line) => {
-                pb.println(line);
-            }
-        }
-    }
 
     // Wait for command to complete
     let status = child
@@ -119,25 +73,25 @@ fn run_command(cmd_entry: &CommandEntry) -> Result<(), String> {
         .map_err(|e| format!("Failed to wait for command: {}", e))?;
 
     // Calculate elapsed time
-    let elapsed = pb.elapsed();
+    let elapsed = timer.elapsed();
 
     if status.success() {
-        // TODO: replace with custom ProgressTracker for elapsed time that has this higher
-        // precision
-        pb.finish_with_message(format!(
-            "{} {} {}",
+        println!(
+            "{} {} {} {}",
+            console::style("└─▶").dim(),
             console::style("✓").green(),
-            console::style(&cmd_entry.title).bold().dim(),
+            console::style(&cmd_entry.title).bold(),
             console::style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
-        ));
+        );
         Ok(())
     } else {
-        pb.finish_with_message(format!(
-            "{} {} {}",
+        println!(
+            "{} {} {} {}",
+            console::style("└─▶").dim(),
             console::style("✗").red(),
-            console::style(&cmd_entry.title).bold().dim(),
+            console::style(&cmd_entry.title).bold(),
             console::style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
-        ));
+        );
         Err(format!("Command exited with status: {}", status))
     }
 }
