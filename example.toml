@@ -1,0 +1,11 @@
+[[commands]]
+title = "List files"
+command = "ls -la"
+
+[[commands]]
+title = "Echo test"
+command = "echo Hello from getset"
+
+[[commands]]
+title = "Show date"
+command = "date"

@@ -1,0 +1,11 @@
+[[commands]]
+title = "This will pass"
+command = "echo Success"
+
+[[commands]]
+title = "This will fail"
+command = "ls nonexistent-file"
+
+[[commands]]
+title = "This should not run"
+command = "echo Should not see this"
