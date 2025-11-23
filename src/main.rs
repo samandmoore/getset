@@ -3,6 +3,7 @@ mod runner;
 
 use clap::Parser;
 use config::Config;
+use console::style;
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -48,13 +49,10 @@ fn main() {
                 });
             }
             Err(e) => {
-                eprintln!(
-                    "\n{} A command failed",
-                    console::style("Error:").red().bold(),
-                );
+                eprintln!("\n{} A command failed", style("Error:").red().bold(),);
 
                 if cli.verbose {
-                    eprintln!("{}", console::style(e).red());
+                    eprintln!("{}", style(e).red());
                 }
                 std::process::exit(1);
             }
@@ -63,11 +61,11 @@ fn main() {
 
     let elapsed = timer.elapsed();
 
-    println!("{}", console::style("│").dim());
+    println!("{}", style("│").dim());
     println!(
         "{} All set! {}",
-        console::style("└─▶").dim(),
-        console::style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
+        style("└─▶").dim(),
+        style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
     );
 
     if cli.report {
@@ -76,20 +74,20 @@ fn main() {
 }
 
 fn print_profile_report(results: &[CommandResult], total: std::time::Duration) {
-    println!("\n{}", console::style("📊 Report").bold().cyan());
+    println!("\n{}", style("📊 Report").bold().cyan());
 
     for result in results {
         println!(
             "{} {} {}",
-            console::style("├──▶").dim(),
-            console::style(format!("{:.2}s", result.duration.as_secs_f64())).dim(),
-            console::style(&result.title).bold(),
+            style("├──▶").dim(),
+            style(format!("{:.2}s", result.duration.as_secs_f64())).dim(),
+            style(&result.title).bold(),
         );
     }
 
     println!(
         "{} {}",
-        console::style("└─▶").dim(),
-        console::style(format!("{:.2}s", total.as_secs_f64())).dim()
+        style("└─▶").dim(),
+        style(format!("{:.2}s", total.as_secs_f64())).dim()
     );
 }

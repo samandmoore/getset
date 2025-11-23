@@ -1,3 +1,5 @@
+use console::style;
+
 use crate::config::CommandEntry;
 use std::io::{self, IsTerminal};
 use std::process::{Command, Stdio};
@@ -13,12 +15,12 @@ fn should_use_pty() -> bool {
 fn print_command_start(cmd_entry: &CommandEntry, verbose: bool) {
     println!(
         "{} {}",
-        console::style("===>").bold().dim(),
-        console::style(&cmd_entry.title).bold().dim()
+        style("===>").bold().dim(),
+        style(&cmd_entry.title).bold().dim()
     );
 
     if verbose {
-        println!("{}", console::style(&cmd_entry.command).yellow().dim());
+        println!("{}", style(&cmd_entry.command).yellow().dim());
     }
 }
 
@@ -27,18 +29,18 @@ fn print_command_result(cmd_entry: &CommandEntry, elapsed: Duration, success: bo
     if success {
         println!(
             "{} {} {} {}",
-            console::style("└──▶").dim(),
-            console::style("✓").green(),
-            console::style(&cmd_entry.title).bold(),
-            console::style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
+            style("└──▶").dim(),
+            style("✓").green(),
+            style(&cmd_entry.title).bold(),
+            style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
         );
     } else {
         println!(
             "{} {} {} {}",
-            console::style("└──▶").dim(),
-            console::style("✗").red(),
-            console::style(&cmd_entry.title).bold(),
-            console::style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
+            style("└──▶").dim(),
+            style("✗").red(),
+            style(&cmd_entry.title).bold(),
+            style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
         );
     }
 }
