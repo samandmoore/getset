@@ -35,7 +35,7 @@ mod tests {
     #[test]
     fn test_parse_example_toml() {
         let config = Config::from_file("example.toml").expect("Failed to parse example.toml");
-        
+
         assert_eq!(config.commands.len(), 3);
         assert_eq!(config.commands[0].title, "List files");
         assert_eq!(config.commands[0].command, "ls -la");
@@ -43,16 +43,18 @@ mod tests {
 
     #[test]
     fn test_parse_example_fail_toml() {
-        let config = Config::from_file("example-fail.toml").expect("Failed to parse example-fail.toml");
-        
+        let config =
+            Config::from_file("example-fail.toml").expect("Failed to parse example-fail.toml");
+
         assert_eq!(config.commands.len(), 3);
         assert_eq!(config.commands[0].title, "This will pass");
     }
 
     #[test]
     fn test_parse_example_input_toml() {
-        let config = Config::from_file("example-input.toml").expect("Failed to parse example-input.toml");
-        
+        let config =
+            Config::from_file("example-input.toml").expect("Failed to parse example-input.toml");
+
         assert_eq!(config.commands.len(), 4);
         assert_eq!(config.commands[2].title, "User input");
         assert!(config.commands[2].command.contains("read -r -p"));
@@ -60,8 +62,9 @@ mod tests {
 
     #[test]
     fn test_parse_example_multiline_toml() {
-        let config = Config::from_file("example-multiline.toml").expect("Failed to parse example-multiline.toml");
-        
+        let config = Config::from_file("example-multiline.toml")
+            .expect("Failed to parse example-multiline.toml");
+
         assert_eq!(config.commands.len(), 1);
         assert_eq!(config.commands[0].title, "Slow loop");
         assert!(config.commands[0].command.contains("while [ $i -le 10 ]"));
@@ -69,8 +72,9 @@ mod tests {
 
     #[test]
     fn test_parse_example_slow_toml() {
-        let config = Config::from_file("example-slow.toml").expect("Failed to parse example-slow.toml");
-        
+        let config =
+            Config::from_file("example-slow.toml").expect("Failed to parse example-slow.toml");
+
         assert_eq!(config.commands.len(), 3);
         assert_eq!(config.commands[1].title, "Slow loop");
         assert!(config.commands[1].command.contains("sleep $i"));
