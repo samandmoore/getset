@@ -11,16 +11,9 @@ fn get_fixture_path(filename: &str) -> PathBuf {
     path
 }
 
-/// Helper function to get the binary path without using deprecated cargo_bin
-fn get_bin() -> std::process::Command {
-    // Use CARGO_BIN_EXE_<name> environment variable which is set by cargo test
-    let bin_path = env!("CARGO_BIN_EXE_getset");
-    std::process::Command::new(bin_path)
-}
-
 #[test]
 fn test_help_output() {
-    get_bin()
+    std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
         .arg("--help")
         .assert()
         .success()
@@ -37,7 +30,7 @@ fn test_help_output() {
 fn test_valid_file_execution() {
     let fixture = get_fixture_path("valid.toml");
 
-    get_bin()
+    std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
         .arg(&fixture)
         .assert()
         .success()
@@ -52,7 +45,7 @@ fn test_valid_file_execution() {
 fn test_invalid_file_error() {
     let fixture = get_fixture_path("invalid.toml");
 
-    get_bin()
+    std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
         .arg(&fixture)
         .assert()
         .failure()
@@ -61,7 +54,7 @@ fn test_invalid_file_error() {
 
 #[test]
 fn test_nonexistent_file_error() {
-    get_bin()
+    std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
         .arg("nonexistent-file-that-does-not-exist.toml")
         .assert()
         .failure()
@@ -75,7 +68,7 @@ fn test_nonexistent_file_error() {
 fn test_verbose_flag_shows_command_text() {
     let fixture = get_fixture_path("verbose-test.toml");
 
-    get_bin()
+    std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
         .arg("--verbose")
         .arg(&fixture)
         .assert()
@@ -88,7 +81,7 @@ fn test_verbose_flag_shows_command_text() {
 fn test_verbose_flag_without_verbose() {
     let fixture = get_fixture_path("verbose-test.toml");
 
-    get_bin()
+    std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
         .arg(&fixture)
         .assert()
         .success()
@@ -100,7 +93,7 @@ fn test_verbose_flag_without_verbose() {
 fn test_report_flag() {
     let fixture = get_fixture_path("valid.toml");
 
-    get_bin()
+    std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
         .arg("--report")
         .arg(&fixture)
         .assert()
