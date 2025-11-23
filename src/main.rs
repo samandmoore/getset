@@ -1,6 +1,7 @@
+mod config;
+
 use clap::Parser;
-use serde::Deserialize;
-use std::fs;
+use config::{CommandEntry, Config};
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::time::Instant;
@@ -21,17 +22,6 @@ struct Cli {
     report: bool,
 }
 
-#[derive(Debug, Deserialize)]
-struct Config {
-    commands: Vec<CommandEntry>,
-}
-
-#[derive(Debug, Deserialize)]
-struct CommandEntry {
-    title: String,
-    command: String,
-}
-
 #[derive(Debug)]
 struct CommandResult {
     title: String,
@@ -41,13 +31,8 @@ struct CommandResult {
 fn main() {
     let cli = Cli::parse();
 
-    let toml_content = fs::read_to_string(&cli.file).unwrap_or_else(|e| {
-        eprintln!("Error reading file: {}", e);
-        std::process::exit(1);
-    });
-
-    let config: Config = toml::from_str(&toml_content).unwrap_or_else(|e| {
-        eprintln!("Error parsing TOML: {}", e);
+    let config = Config::from_file(&cli.file).unwrap_or_else(|e| {
+        eprintln!("{}", e);
         std::process::exit(1);
     });
 
