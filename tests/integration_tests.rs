@@ -1,7 +1,6 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::path::PathBuf;
-use std::process::Command;
 
 /// Helper function to get the path to test fixtures
 fn get_fixture_path(filename: &str) -> PathBuf {
@@ -13,10 +12,10 @@ fn get_fixture_path(filename: &str) -> PathBuf {
 }
 
 /// Helper function to get the binary path without using deprecated cargo_bin
-fn get_bin() -> Command {
+fn get_bin() -> std::process::Command {
     // Use CARGO_BIN_EXE_<name> environment variable which is set by cargo test
     let bin_path = env!("CARGO_BIN_EXE_getset");
-    Command::new(bin_path)
+    std::process::Command::new(bin_path)
 }
 
 #[test]
