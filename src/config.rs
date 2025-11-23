@@ -33,50 +33,89 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_example_toml() {
-        let config = Config::from_file("example.toml").expect("Failed to parse example.toml");
+    fn test_load_from_file() {
+        let config = Config::from_file("tests/fixtures/valid_config.toml")
+            .expect("Failed to load config from file");
 
-        assert_eq!(config.commands.len(), 3);
-        assert_eq!(config.commands[0].title, "List files");
-        assert_eq!(config.commands[0].command, "ls -la");
+        assert_eq!(config.commands.len(), 2);
+        assert_eq!(config.commands[0].title, "Test Command 1");
+        assert_eq!(config.commands[0].command, "echo test1");
+        assert_eq!(config.commands[1].title, "Test Command 2");
+        assert_eq!(config.commands[1].command, "echo test2");
     }
 
     #[test]
-    fn test_parse_example_fail_toml() {
-        let config =
-            Config::from_file("example-fail.toml").expect("Failed to parse example-fail.toml");
+    fn test_load_from_string() {
+        let toml_str = r#"
+[[commands]]
+title = "String Command"
+command = "echo from string"
+"#;
 
-        assert_eq!(config.commands.len(), 3);
-        assert_eq!(config.commands[0].title, "This will pass");
-    }
-
-    #[test]
-    fn test_parse_example_input_toml() {
-        let config =
-            Config::from_file("example-input.toml").expect("Failed to parse example-input.toml");
-
-        assert_eq!(config.commands.len(), 4);
-        assert_eq!(config.commands[2].title, "User input");
-        assert!(config.commands[2].command.contains("read -r -p"));
-    }
-
-    #[test]
-    fn test_parse_example_multiline_toml() {
-        let config = Config::from_file("example-multiline.toml")
-            .expect("Failed to parse example-multiline.toml");
+        let config = Config::from_str(toml_str).expect("Failed to parse config from string");
 
         assert_eq!(config.commands.len(), 1);
-        assert_eq!(config.commands[0].title, "Slow loop");
-        assert!(config.commands[0].command.contains("while [ $i -le 10 ]"));
+        assert_eq!(config.commands[0].title, "String Command");
+        assert_eq!(config.commands[0].command, "echo from string");
     }
 
     #[test]
-    fn test_parse_example_slow_toml() {
-        let config =
-            Config::from_file("example-slow.toml").expect("Failed to parse example-slow.toml");
+    fn test_valid_parse() {
+        let toml_str = r#"
+[[commands]]
+title = "Valid Command 1"
+command = "ls -la"
 
-        assert_eq!(config.commands.len(), 3);
-        assert_eq!(config.commands[1].title, "Slow loop");
-        assert!(config.commands[1].command.contains("sleep $i"));
+[[commands]]
+title = "Valid Command 2"
+command = "pwd"
+"#;
+
+        let config = Config::from_str(toml_str).expect("Failed to parse valid TOML");
+
+        assert_eq!(config.commands.len(), 2);
+        assert_eq!(config.commands[0].title, "Valid Command 1");
+        assert_eq!(config.commands[0].command, "ls -la");
+        assert_eq!(config.commands[1].title, "Valid Command 2");
+        assert_eq!(config.commands[1].command, "pwd");
+    }
+
+    #[test]
+    fn test_invalid_parse_missing_field() {
+        let invalid_toml = r#"
+[[commands]]
+title = "Missing command field"
+"#;
+
+        let result = Config::from_str(invalid_toml);
+        assert!(result.is_err(), "Should fail when command field is missing");
+        assert!(result.unwrap_err().contains("Error parsing TOML"));
+    }
+
+    #[test]
+    fn test_invalid_parse_malformed_toml() {
+        let malformed_toml = r#"
+[[commands]
+title = "Missing closing bracket"
+command = "echo test"
+"#;
+
+        let result = Config::from_str(malformed_toml);
+        assert!(result.is_err(), "Should fail with malformed TOML");
+        assert!(result.unwrap_err().contains("Error parsing TOML"));
+    }
+
+    #[test]
+    fn test_load_from_nonexistent_file() {
+        let result = Config::from_file("tests/fixtures/nonexistent.toml");
+        assert!(result.is_err(), "Should fail when file doesn't exist");
+        assert!(result.unwrap_err().contains("Error reading file"));
+    }
+
+    #[test]
+    fn test_load_from_invalid_file() {
+        let result = Config::from_file("tests/fixtures/invalid_config.toml");
+        assert!(result.is_err(), "Should fail with invalid config file");
+        assert!(result.unwrap_err().contains("Error parsing TOML"));
     }
 }

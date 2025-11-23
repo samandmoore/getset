@@ -1,0 +1,3 @@
+[[commands]]
+title = "Missing command field"
+# This is invalid because it's missing the required 'command' field
