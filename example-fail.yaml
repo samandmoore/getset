@@ -1,7 +1,0 @@
-commands:
-  - title: "This will pass"
-    command: "echo Success"
-  - title: "This will fail"
-    command: "ls nonexistent-file"
-  - title: "This should not run"
-    command: "echo Should not see this"

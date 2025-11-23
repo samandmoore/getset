@@ -1,0 +1,25 @@
+[[commands]]
+title = "List files"
+command = "ls -la"
+
+[[commands]]
+title = "Echo test"
+command = "echo Hello from getset"
+
+[[commands]]
+title = "User input"
+command = """
+read -r -p "do you want to continue? [y/N] " response
+case "$response" in
+[yY][eE][sS] | [yY])
+  exit 0
+  ;;
+*)
+  exit 1
+  ;;
+esac
+"""
+
+[[commands]]
+title = "Show date"
+command = "date"
