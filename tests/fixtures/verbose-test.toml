@@ -1,0 +1,3 @@
+[[commands]]
+title = "Simple echo"
+command = "echo 'Hello from verbose test'"
