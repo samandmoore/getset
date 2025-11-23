@@ -1,0 +1,7 @@
+[[commands]]
+title = "Test Command 1"
+command = "echo test1"
+
+[[commands]]
+title = "Test Command 2"
+command = "echo test2"
