@@ -10,3 +10,7 @@ toml = "0.8"
 indicatif = "0.18.3"
 console = "0.16.1"
 pty-process = "0.5.3"
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.1"
