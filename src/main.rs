@@ -1,9 +1,9 @@
 mod config;
+mod runner;
 
 use clap::Parser;
-use config::{CommandEntry, Config};
+use config::Config;
 use std::path::PathBuf;
-use std::process::Stdio;
 use std::time::Instant;
 
 #[derive(Parser)]
@@ -40,7 +40,7 @@ fn main() {
     let mut results = Vec::new();
 
     for cmd_entry in config.commands.iter() {
-        match run_command(cmd_entry, cli.verbose) {
+        match runner::run_command(cmd_entry, cli.verbose) {
             Ok(duration) => {
                 results.push(CommandResult {
                     title: cmd_entry.title.clone(),
@@ -72,58 +72,6 @@ fn main() {
 
     if cli.report {
         print_profile_report(&results, elapsed);
-    }
-}
-
-fn run_command(cmd_entry: &CommandEntry, verbose: bool) -> Result<std::time::Duration, String> {
-    let timer = Instant::now();
-    let (_, pts) = pty_process::blocking::open().unwrap();
-
-    println!(
-        "{} {}",
-        console::style("===>").bold().dim(),
-        console::style(&cmd_entry.title).bold().dim()
-    );
-
-    if verbose {
-        println!("{}", console::style(&cmd_entry.command).yellow().dim());
-    }
-
-    // Execute command through shell to support multiline scripts and shell features
-    let mut child = pty_process::blocking::Command::new("sh")
-        .arg("-c")
-        .arg(&cmd_entry.command)
-        .stdin(Stdio::inherit())
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .spawn(pts)
-        .map_err(|e| format!("Failed to spawn command: {}", e))?;
-
-    // Wait for command to complete
-    let status = child
-        .wait()
-        .map_err(|e| format!("Failed to wait for command: {}", e))?;
-
-    let elapsed = timer.elapsed();
-
-    if status.success() {
-        println!(
-            "{} {} {} {}",
-            console::style("└──▶").dim(),
-            console::style("✓").green(),
-            console::style(&cmd_entry.title).bold(),
-            console::style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
-        );
-        Ok(elapsed)
-    } else {
-        println!(
-            "{} {} {} {}",
-            console::style("└──▶").dim(),
-            console::style("✗").red(),
-            console::style(&cmd_entry.title).bold(),
-            console::style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
-        );
-        Err(format!("Command exited with status: {}", status))
     }
 }
 
