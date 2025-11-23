@@ -16,7 +16,9 @@ pub struct CommandEntry {
 impl Config {
     /// Load and parse a TOML configuration file
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, String> {
-        let toml_content = fs::read_to_string(path).map_err(|e| format!("Error reading file: {}", e))?;
+        let path_ref = path.as_ref();
+        let toml_content = fs::read_to_string(path_ref)
+            .map_err(|e| format!("Error reading file '{}': {}", path_ref.display(), e))?;
         Self::from_str(&toml_content)
     }
 
