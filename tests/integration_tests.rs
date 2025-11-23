@@ -3,7 +3,13 @@ use std::process::Command;
 
 /// Helper function to get the path to the compiled binary
 fn get_binary_path() -> PathBuf {
-    let mut path = std::env::current_exe().unwrap();
+    // Try to use CARGO_BIN_EXE environment variable first (more reliable)
+    if let Ok(path) = std::env::var("CARGO_BIN_EXE_getset") {
+        return PathBuf::from(path);
+    }
+
+    // Fallback to computing path from test executable
+    let mut path = std::env::current_exe().expect("Failed to get current executable path");
     path.pop(); // Remove test executable name
     path.pop(); // Remove 'deps'
     path.push("getset");
@@ -95,8 +101,10 @@ fn test_valid_file_execution() {
         // In non-PTY environments, verify the file was at least parsed correctly
         // The first command title should appear before any error
         assert!(
-            stdout.contains("Echo test 1") || stderr.contains("command failed"),
-            "Should show attempt to run first command or PTY error"
+            stdout.contains("Echo test 1")
+                || stderr.contains("command failed")
+                || stderr.contains("Input/output error"),
+            "Should show attempt to run first command or execution error"
         );
         // Should NOT be a file parsing error
         assert!(
