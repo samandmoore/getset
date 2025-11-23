@@ -67,51 +67,36 @@ fn test_valid_file_execution() {
         .output()
         .expect("Failed to execute command");
 
+    assert!(
+        output.status.success(),
+        "Valid file execution should succeed"
+    );
+
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let stderr = String::from_utf8_lossy(&output.stderr);
 
-    // Note: This test may fail in CI/non-PTY environments due to PTY requirements
-    // In such cases, we verify that:
-    // 1. The file was successfully read and parsed (command titles appear)
-    // 2. Command execution was attempted (no file parsing errors)
+    // Verify that each command title shows up in the output
+    assert!(
+        stdout.contains("Echo test 1"),
+        "Output should contain first command title"
+    );
+    assert!(
+        stdout.contains("Echo test 2"),
+        "Output should contain second command title"
+    );
+    assert!(
+        stdout.contains("Echo test 3"),
+        "Output should contain third command title"
+    );
 
-    if output.status.success() {
-        // If execution succeeded (PTY available), verify full output
-        assert!(
-            stdout.contains("Echo test 1"),
-            "Output should contain first command title"
-        );
-        assert!(
-            stdout.contains("Echo test 2"),
-            "Output should contain second command title"
-        );
-        assert!(
-            stdout.contains("Echo test 3"),
-            "Output should contain third command title"
-        );
-        assert!(
-            stdout.contains("✓"),
-            "Output should contain success checkmarks"
-        );
-        assert!(
-            stdout.contains("All set!"),
-            "Output should contain completion message"
-        );
-    } else {
-        // In non-PTY environments, verify the file was at least parsed correctly
-        // The first command title should appear before any error
-        assert!(
-            stdout.contains("Echo test 1")
-                || stderr.contains("command failed")
-                || stderr.contains("Input/output error"),
-            "Should show attempt to run first command or execution error"
-        );
-        // Should NOT be a file parsing error
-        assert!(
-            !stderr.contains("Error parsing TOML") && !stderr.contains("Error reading file"),
-            "Should not be a file parsing error - file should be valid"
-        );
-    }
+    // Verify success indicators
+    assert!(
+        stdout.contains("✓"),
+        "Output should contain success checkmarks"
+    );
+    assert!(
+        stdout.contains("All set!"),
+        "Output should contain completion message"
+    );
 }
 
 #[test]
@@ -172,12 +157,11 @@ fn test_verbose_flag_shows_command_text() {
         .output()
         .expect("Failed to execute command");
 
+    assert!(output.status.success(), "Verbose execution should succeed");
+
     let stdout = String::from_utf8_lossy(&output.stdout);
 
-    // In PTY environments, this should succeed. In non-PTY environments,
-    // we can still verify the verbose flag shows command text before PTY failure
-
-    // Verify that the actual command text is shown (this happens before PTY spawn)
+    // Verify that the actual command text is shown
     assert!(
         stdout.contains("echo 'Hello from verbose test'"),
         "Verbose output should contain the command text"
@@ -199,6 +183,8 @@ fn test_verbose_flag_without_verbose() {
         .arg(&fixture)
         .output()
         .expect("Failed to execute command");
+
+    assert!(output.status.success(), "Normal execution should succeed");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
 
@@ -226,12 +212,16 @@ fn test_report_flag() {
         .output()
         .expect("Failed to execute command");
 
+    assert!(
+        output.status.success(),
+        "Execution with report flag should succeed"
+    );
+
     let stdout = String::from_utf8_lossy(&output.stdout);
 
-    // Even in non-PTY environments where execution fails,
-    // we can verify the commands were parsed and execution was attempted
+    // Verify that report section is shown
     assert!(
-        stdout.contains("Echo test 1"),
-        "Output should show first command was processed"
+        stdout.contains("📊 Report") || stdout.contains("Report"),
+        "Output with --report should contain report section"
     );
 }
