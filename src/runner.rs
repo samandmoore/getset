@@ -46,8 +46,8 @@ fn print_command_result(cmd_entry: &CommandEntry, elapsed: Duration, success: bo
 /// Run a command using PTY for better terminal support
 fn run_with_pty(cmd_entry: &CommandEntry) -> Result<(bool, Duration), String> {
     let timer = Instant::now();
-    let (_, pts) = pty_process::blocking::open()
-        .map_err(|e| format!("Failed to open PTY: {}", e))?;
+    let (_, pts) =
+        pty_process::blocking::open().map_err(|e| format!("Failed to open PTY: {}", e))?;
 
     // Execute command through shell to support multiline scripts and shell features
     let mut child = pty_process::blocking::Command::new("sh")

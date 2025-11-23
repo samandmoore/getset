@@ -75,8 +75,6 @@ fn main() {
     }
 }
 
-
-
 fn print_profile_report(results: &[CommandResult], total: std::time::Duration) {
     println!("\n{}", console::style("📊 Report").bold().cyan());
 
