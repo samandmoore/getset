@@ -1,6 +1,7 @@
-use assert_cmd::Command;
+use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::path::PathBuf;
+use std::process::Command;
 
 /// Helper function to get the path to test fixtures
 fn get_fixture_path(filename: &str) -> PathBuf {
@@ -11,10 +12,16 @@ fn get_fixture_path(filename: &str) -> PathBuf {
     path
 }
 
+/// Helper function to get the binary path without using deprecated cargo_bin
+fn get_bin() -> Command {
+    // Use CARGO_BIN_EXE_<name> environment variable which is set by cargo test
+    let bin_path = env!("CARGO_BIN_EXE_getset");
+    Command::new(bin_path)
+}
+
 #[test]
 fn test_help_output() {
-    Command::cargo_bin("getset")
-        .expect("Failed to find binary")
+    get_bin()
         .arg("--help")
         .assert()
         .success()
@@ -31,8 +38,7 @@ fn test_help_output() {
 fn test_valid_file_execution() {
     let fixture = get_fixture_path("valid.toml");
 
-    Command::cargo_bin("getset")
-        .expect("Failed to find binary")
+    get_bin()
         .arg(&fixture)
         .assert()
         .success()
@@ -47,8 +53,7 @@ fn test_valid_file_execution() {
 fn test_invalid_file_error() {
     let fixture = get_fixture_path("invalid.toml");
 
-    Command::cargo_bin("getset")
-        .expect("Failed to find binary")
+    get_bin()
         .arg(&fixture)
         .assert()
         .failure()
@@ -57,8 +62,7 @@ fn test_invalid_file_error() {
 
 #[test]
 fn test_nonexistent_file_error() {
-    Command::cargo_bin("getset")
-        .expect("Failed to find binary")
+    get_bin()
         .arg("nonexistent-file-that-does-not-exist.toml")
         .assert()
         .failure()
@@ -72,8 +76,7 @@ fn test_nonexistent_file_error() {
 fn test_verbose_flag_shows_command_text() {
     let fixture = get_fixture_path("verbose-test.toml");
 
-    Command::cargo_bin("getset")
-        .expect("Failed to find binary")
+    get_bin()
         .arg("--verbose")
         .arg(&fixture)
         .assert()
@@ -86,8 +89,7 @@ fn test_verbose_flag_shows_command_text() {
 fn test_verbose_flag_without_verbose() {
     let fixture = get_fixture_path("verbose-test.toml");
 
-    Command::cargo_bin("getset")
-        .expect("Failed to find binary")
+    get_bin()
         .arg(&fixture)
         .assert()
         .success()
@@ -99,8 +101,7 @@ fn test_verbose_flag_without_verbose() {
 fn test_report_flag() {
     let fixture = get_fixture_path("valid.toml");
 
-    Command::cargo_bin("getset")
-        .expect("Failed to find binary")
+    get_bin()
         .arg("--report")
         .arg(&fixture)
         .assert()
