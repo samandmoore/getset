@@ -1,0 +1,11 @@
+[[commands]]
+title = "Echo test 1"
+command = "echo 'Test 1'"
+
+[[commands]]
+title = "Echo test 2"
+command = "echo 'Test 2'"
+
+[[commands]]
+title = "Echo test 3"
+command = "echo 'Test 3'"
