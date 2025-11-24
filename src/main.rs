@@ -61,10 +61,8 @@ fn main() {
 
     let elapsed = timer.elapsed();
 
-    println!("{}", style("│").dim());
     println!(
-        "{} All set! {}",
-        style("└─▶").dim(),
+        "\n🎯 All set! {}",
         style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
     );
 
@@ -74,20 +72,21 @@ fn main() {
 }
 
 fn print_report(results: &[CommandResult], total: std::time::Duration) {
-    println!("\n{}", style("📊 Report").bold().cyan());
+    println!("\n{}", style("📊 Report").bold());
 
     for result in results {
         println!(
             "{} {} {}",
             style("├──▶").dim(),
             style(format!("{:.2}s", result.duration.as_secs_f64())).dim(),
-            style(&result.title).bold(),
+            &result.title,
         );
     }
 
     println!(
-        "{} {}",
+        "{} {} {}",
         style("└─▶").dim(),
-        style(format!("{:.2}s", total.as_secs_f64())).dim()
+        style(format!("{:.2}s", total.as_secs_f64())).dim().bold(),
+        style("Total").bold(),
     );
 }

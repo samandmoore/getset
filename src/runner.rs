@@ -14,9 +14,10 @@ fn should_use_pty() -> bool {
 /// Print command start message
 fn print_command_start(cmd_entry: &CommandEntry, verbose: bool) {
     println!(
-        "{} {}",
-        style("===>").bold().dim(),
-        style(&cmd_entry.title).bold().dim()
+        "{} {} {}",
+        style("==>").bold().cyan(),
+        style("Step:").bold(),
+        style(&cmd_entry.title).bold().cyan()
     );
 
     if verbose {
@@ -28,17 +29,15 @@ fn print_command_start(cmd_entry: &CommandEntry, verbose: bool) {
 fn print_command_result(cmd_entry: &CommandEntry, elapsed: Duration, success: bool) {
     if success {
         println!(
-            "{} {} {} {}",
-            style("└──▶").dim(),
-            style("✓").green(),
-            style(&cmd_entry.title).bold(),
+            "{} {} {}",
+            style("==>").bold().green(),
+            style(&cmd_entry.title).dim(),
             style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
         );
     } else {
         println!(
-            "{} {} {} {}",
-            style("└──▶").dim(),
-            style("✗").red(),
+            "{} {} {}",
+            style("==>").bold().red(),
             style(&cmd_entry.title).bold(),
             style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
         );

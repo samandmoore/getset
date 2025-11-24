@@ -37,7 +37,6 @@ fn test_valid_file_execution() {
         .stdout(predicate::str::contains("Echo test 1"))
         .stdout(predicate::str::contains("Echo test 2"))
         .stdout(predicate::str::contains("Echo test 3"))
-        .stdout(predicate::str::contains("✓"))
         .stdout(predicate::str::contains("All set!"));
 }
 
