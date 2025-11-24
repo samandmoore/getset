@@ -69,11 +69,11 @@ fn main() {
     );
 
     if cli.report {
-        print_profile_report(&results, elapsed);
+        print_report(&results, elapsed);
     }
 }
 
-fn print_profile_report(results: &[CommandResult], total: std::time::Duration) {
+fn print_report(results: &[CommandResult], total: std::time::Duration) {
     println!("\n{}", style("📊 Report").bold().cyan());
 
     for result in results {
