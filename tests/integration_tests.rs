@@ -99,3 +99,17 @@ fn test_report_flag() {
         .success()
         .stdout(predicate::str::contains("📊 Report").or(predicate::str::contains("Report")));
 }
+
+#[test]
+fn test_default_config_file() {
+    // Change to the fixtures directory so getset.toml is found
+    let fixtures_dir = get_fixture_path(".");
+
+    std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .current_dir(fixtures_dir)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Default config test 1"))
+        .stdout(predicate::str::contains("Default config test 2"))
+        .stdout(predicate::str::contains("All set!"));
+}

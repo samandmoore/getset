@@ -34,9 +34,16 @@ Then run `getset` with the path to your TOML file:
 getset bootstrap.toml
 ```
 
+Or, if you name your file `getset.toml`, you can run it without any arguments:
+
+```bash
+getset  # Uses getset.toml by default
+```
+
 ### Command line options
 
 ```bash
+getset                  # Run commands from getset.toml (default)
 getset <file>           # Run commands from a TOML file
 getset <file> --verbose # Show command text while running
 getset <file> --report  # Show timing report at the end

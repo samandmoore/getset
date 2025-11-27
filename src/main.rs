@@ -11,7 +11,8 @@ use std::time::Instant;
 #[command(name = "getset")]
 #[command(about = "Run commands from a TOML file sequentially", long_about = None)]
 struct Cli {
-    /// Path to the TOML file containing commands
+    /// Path to the TOML file containing commands (defaults to getset.toml)
+    #[arg(default_value = "getset.toml")]
     file: PathBuf,
 
     /// Show verbose logging
