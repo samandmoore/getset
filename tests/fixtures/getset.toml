@@ -1,0 +1,7 @@
+[[commands]]
+title = "Default config test 1"
+command = "echo 'Testing default config file'"
+
+[[commands]]
+title = "Default config test 2"
+command = "echo 'getset.toml works!'"
