@@ -103,7 +103,7 @@ fn test_report_flag() {
 #[test]
 fn test_default_config_file() {
     // Change to the fixtures directory so getset.toml is found
-    let fixtures_dir = get_fixture_path("");
+    let fixtures_dir = get_fixture_path(".");
 
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
         .current_dir(fixtures_dir)
