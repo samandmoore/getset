@@ -22,6 +22,10 @@ struct Cli {
     /// Show profiling report at the end
     #[arg(long)]
     report: bool,
+
+    /// Run only steps matching this substring (case-insensitive)
+    #[arg(long)]
+    step: Option<String>,
 }
 
 #[derive(Debug)]
@@ -38,10 +42,45 @@ fn main() {
         std::process::exit(1);
     });
 
+    // Filter commands based on --step argument if provided
+    let commands_to_run: Vec<&config::CommandEntry> = if let Some(ref step_filter) = cli.step {
+        let matches: Vec<&config::CommandEntry> = config
+            .commands
+            .iter()
+            .filter(|cmd| cmd.title.to_lowercase().contains(&step_filter.to_lowercase()))
+            .collect();
+
+        if matches.is_empty() {
+            eprintln!(
+                "{} No steps found matching '{}'",
+                style("Error:").red().bold(),
+                step_filter
+            );
+            std::process::exit(1);
+        }
+
+        if matches.len() > 1 {
+            println!(
+                "{} Found {} steps matching '{}':",
+                style("Info:").cyan().bold(),
+                matches.len(),
+                step_filter
+            );
+            for (i, cmd) in matches.iter().enumerate() {
+                println!("  {}. {}", i + 1, style(&cmd.title).cyan());
+            }
+            println!();
+        }
+
+        matches
+    } else {
+        config.commands.iter().collect()
+    };
+
     let timer = Instant::now();
     let mut results = Vec::new();
 
-    for cmd_entry in config.commands.iter() {
+    for cmd_entry in commands_to_run.iter() {
         match runner::run_command(cmd_entry, cli.verbose) {
             Ok(duration) => {
                 results.push(CommandResult {

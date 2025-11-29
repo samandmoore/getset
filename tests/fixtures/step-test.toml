@@ -1,0 +1,19 @@
+[[commands]]
+title = "Build frontend"
+command = "echo 'Building frontend...'"
+
+[[commands]]
+title = "Build backend"
+command = "echo 'Building backend...'"
+
+[[commands]]
+title = "Run tests"
+command = "echo 'Running tests...'"
+
+[[commands]]
+title = "Deploy to production"
+command = "echo 'Deploying...'"
+
+[[commands]]
+title = "Build documentation"
+command = "echo 'Building docs...'"
