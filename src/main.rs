@@ -47,7 +47,11 @@ fn main() {
         let matches: Vec<&config::CommandEntry> = config
             .commands
             .iter()
-            .filter(|cmd| cmd.title.to_lowercase().contains(&step_filter.to_lowercase()))
+            .filter(|cmd| {
+                cmd.title
+                    .to_lowercase()
+                    .contains(&step_filter.to_lowercase())
+            })
             .collect();
 
         if matches.is_empty() {

@@ -165,7 +165,9 @@ fn test_step_flag_no_matches() {
         .arg(&fixture)
         .assert()
         .failure()
-        .stderr(predicate::str::contains("No steps found matching 'nonexistent'"));
+        .stderr(predicate::str::contains(
+            "No steps found matching 'nonexistent'",
+        ));
 }
 
 #[test]
