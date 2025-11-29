@@ -43,10 +43,11 @@ getset  # Uses getset.toml by default
 ### Command line options
 
 ```bash
-getset                  # Run commands from getset.toml (default)
-getset <file>           # Run commands from a TOML file
-getset <file> --verbose # Show command text while running
-getset <file> --report  # Show timing report at the end
+getset                      # Run commands from getset.toml (default)
+getset <file>               # Run commands from a TOML file
+getset <file> --verbose     # Show command text while running
+getset <file> --report      # Show timing report at the end
+getset <file> --step <step> # Run only commands matching <STEP> (case-insensitive)
 ```
 
 ### Keep on top of slow steps
