@@ -29,14 +29,14 @@ fn print_command_start(cmd_entry: &CommandEntry, verbose: bool) {
 fn print_command_result(cmd_entry: &CommandEntry, elapsed: Duration, success: bool) {
     if success {
         println!(
-            "{} {} {}",
+            "{} ✔︎ {} {}",
             style("==>").bold().green(),
             style(&cmd_entry.title).dim(),
             style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
         );
     } else {
         println!(
-            "{} {} {}",
+            "{} ✘ {} {}",
             style("==>").bold().red(),
             style(&cmd_entry.title).bold(),
             style(format!("({:.2}s)", elapsed.as_secs_f64())).dim()
