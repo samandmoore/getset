@@ -1,6 +1,7 @@
 use serde::Deserialize;
 use std::fs;
 use std::path::Path;
+use std::str::FromStr;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -19,11 +20,15 @@ impl Config {
         let path_ref = path.as_ref();
         let toml_content = fs::read_to_string(path_ref)
             .map_err(|e| format!("Error reading file '{}': {}", path_ref.display(), e))?;
-        Self::from_str(&toml_content)
+        toml_content.parse()
     }
+}
+
+impl FromStr for Config {
+    type Err = String;
 
     /// Parse a TOML configuration from a string
-    pub fn from_str(toml_content: &str) -> Result<Self, String> {
+    fn from_str(toml_content: &str) -> Result<Self, Self::Err> {
         toml::from_str(toml_content).map_err(|e| format!("Error parsing TOML: {}", e))
     }
 }
@@ -52,7 +57,9 @@ title = "String Command"
 command = "echo from string"
 "#;
 
-        let config = Config::from_str(toml_str).expect("Failed to parse config from string");
+        let config: Config = toml_str
+            .parse()
+            .expect("Failed to parse config from string");
 
         assert_eq!(config.commands.len(), 1);
         assert_eq!(config.commands[0].title, "String Command");
@@ -71,7 +78,7 @@ title = "Valid Command 2"
 command = "pwd"
 "#;
 
-        let config = Config::from_str(toml_str).expect("Failed to parse valid TOML");
+        let config: Config = toml_str.parse().expect("Failed to parse valid TOML");
 
         assert_eq!(config.commands.len(), 2);
         assert_eq!(config.commands[0].title, "Valid Command 1");
@@ -87,7 +94,7 @@ command = "pwd"
 title = "Missing command field"
 "#;
 
-        let result = Config::from_str(invalid_toml);
+        let result: Result<Config, _> = invalid_toml.parse();
         assert!(result.is_err(), "Should fail when command field is missing");
         assert!(result.unwrap_err().contains("Error parsing TOML"));
     }
@@ -100,7 +107,7 @@ title = "Missing closing bracket"
 command = "echo test"
 "#;
 
-        let result = Config::from_str(malformed_toml);
+        let result: Result<Config, _> = malformed_toml.parse();
         assert!(result.is_err(), "Should fail with malformed TOML");
         assert!(result.unwrap_err().contains("Error parsing TOML"));
     }
