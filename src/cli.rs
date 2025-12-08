@@ -1,4 +1,5 @@
 use crate::config::{CommandEntry, Config};
+use crate::platformx::{self, PlatformXClient};
 use crate::runner;
 use clap::Parser;
 use console::style;
@@ -33,8 +34,26 @@ struct CommandResult {
 }
 
 impl App {
-    pub fn run(self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn run(self) -> Result<(), Box<dyn std::error::Error>> {
         let config = Config::from_file(&self.file)?;
+
+        // Get default metadata for telemetry
+        let default_metadata = platformx::get_default_metadata();
+
+        // Initialize PlatformX client if configured
+        let platformx_client = config
+            .platformx
+            .as_ref()
+            .map(|px_config| PlatformXClient::new(px_config.clone(), default_metadata.clone()));
+
+        let timer = Instant::now();
+
+        // Send start event if PlatformX is configured (non-blocking)
+        if let Some(ref client) = platformx_client {
+            let client = client.clone();
+            // ignore errors to avoid failing due to tracking
+            let _ = client.send_start().await;
+        }
 
         // Filter commands based on --step argument if provided
         let commands_to_run: Vec<&CommandEntry> = if let Some(ref step_filter) = self.step {
@@ -75,7 +94,6 @@ impl App {
             config.commands.iter().collect()
         };
 
-        let timer = Instant::now();
         let mut results = Vec::new();
 
         for cmd_entry in commands_to_run.iter() {
@@ -87,11 +105,22 @@ impl App {
                     });
                 }
                 Err(e) => {
+                    let elapsed = timer.elapsed();
                     eprintln!("\n{} A command failed", style("Error:").red().bold(),);
 
                     if self.verbose {
-                        eprintln!("{}", style(e).red());
+                        eprintln!("{}", style(&e).red());
                     }
+
+                    // Send error event if PlatformX is configured (non-blocking)
+                    if let Some(ref client) = platformx_client {
+                        let client = client.clone();
+                        let error_msg = e.clone();
+
+                        // ignore errors to avoid failing due to tracking
+                        let _ = client.send_error(elapsed, error_msg).await;
+                    }
+
                     std::process::exit(1);
                 }
             }
@@ -106,6 +135,13 @@ impl App {
 
         if self.report {
             print_report(&results, elapsed);
+        }
+
+        // Send complete event if PlatformX is configured (non-blocking)
+        if let Some(ref client) = platformx_client {
+            let client = client.clone();
+            // ignore errors to avoid failing due to tracking
+            let _ = client.send_complete(elapsed).await;
         }
 
         Ok(())

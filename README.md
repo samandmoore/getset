@@ -69,3 +69,32 @@ This will show a timing breakdown at the end:
 ├──▶ 15.67s Install Ruby gems
 └─▶ 104.78s
 ```
+
+## PlatformX Integration
+
+You can optionally integrate with [getdx.com](https://getdx.com)'s PlatformX to track usage metrics. Add a `[platformx]` section to your TOML config:
+
+```toml
+[[commands]]
+title = "Install dependencies"
+command = "npm install"
+
+[platformx]
+secret_key = "your_platformx_secret_key"
+event_namespace = "myapp"  # Optional: defaults to "getset"
+```
+
+When configured, `getset` will automatically send the following events:
+
+- **{namespace}.start**: Sent when the command starts
+  - Metadata: `user_shell` (e.g., `/bin/bash`)
+
+- **{namespace}.complete**: Sent when all commands complete successfully
+  - Metadata: `user_shell`, `duration` (in seconds)
+
+- **{namespace}.error**: Sent when a command fails
+  - Metadata: `user_shell`, `duration` (in seconds), `error_message`
+
+Where `{namespace}` is the value of `event_namespace` (defaults to `"getset"` if not specified).
+
+Note: PlatformX errors will not interrupt the CLI execution. If telemetry fails, the CLI will continue normally.

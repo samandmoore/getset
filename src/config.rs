@@ -6,6 +6,13 @@ use std::str::FromStr;
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub commands: Vec<CommandEntry>,
+    pub platformx: Option<PlatformXConfig>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct PlatformXConfig {
+    pub secret_key: String,
+    pub event_namespace: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
