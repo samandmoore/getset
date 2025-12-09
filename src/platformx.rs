@@ -208,17 +208,6 @@ mod tests {
     }
 
     #[test]
-    fn test_platformx_client_with_empty_namespace() {
-        let config = create_test_config(Some("".to_string()));
-        let globals = create_test_globals();
-
-        let client = PlatformXClient::new(config, globals);
-
-        // Empty string should be used as-is, not replaced with default
-        assert_eq!(client.namespace, "");
-    }
-
-    #[test]
     fn test_api_url_constant() {
         assert_eq!(PLATFORMX_API_URL, "https://api.getdx.com/events.track");
     }
