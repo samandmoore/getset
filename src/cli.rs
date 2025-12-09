@@ -38,7 +38,7 @@ impl App {
         let config = Config::from_file(&self.file)?;
 
         // Get default metadata for telemetry
-        let default_metadata = platformx::get_default_metadata();
+        let default_metadata = platformx::get_globals();
 
         // Initialize PlatformX client if configured
         let platformx_client = config

@@ -132,4 +132,111 @@ command = "echo test"
         assert!(result.is_err(), "Should fail with invalid config file");
         assert!(result.unwrap_err().contains("Error parsing TOML"));
     }
+
+    #[test]
+    fn test_platformx_with_secret_key_only() {
+        let toml_str = r#"
+[[commands]]
+title = "Test Command"
+command = "echo test"
+
+[platformx]
+secret_key = "test_secret_key_123"
+"#;
+
+        let config: Config = toml_str
+            .parse()
+            .expect("Failed to parse config with platformx");
+
+        assert!(config.platformx.is_some());
+        let platformx = config.platformx.unwrap();
+        assert_eq!(platformx.secret_key, "test_secret_key_123");
+        assert!(platformx.event_namespace.is_none());
+    }
+
+    #[test]
+    fn test_platformx_with_all_fields() {
+        let toml_str = r#"
+[[commands]]
+title = "Test Command"
+command = "echo test"
+
+[platformx]
+secret_key = "test_secret_key_123"
+event_namespace = "my_namespace"
+"#;
+
+        let config: Config = toml_str
+            .parse()
+            .expect("Failed to parse config with platformx");
+
+        assert!(config.platformx.is_some());
+        let platformx = config.platformx.unwrap();
+        assert_eq!(platformx.secret_key, "test_secret_key_123");
+        assert_eq!(platformx.event_namespace, Some("my_namespace".to_string()));
+    }
+
+    #[test]
+    fn test_config_without_platformx() {
+        let toml_str = r#"
+[[commands]]
+title = "Test Command"
+command = "echo test"
+"#;
+
+        let config: Config = toml_str
+            .parse()
+            .expect("Failed to parse config without platformx");
+
+        assert!(config.platformx.is_none());
+        assert_eq!(config.commands.len(), 1);
+    }
+
+    #[test]
+    fn test_platformx_missing_required_field() {
+        let toml_str = r#"
+[[commands]]
+title = "Test Command"
+command = "echo test"
+
+[platformx]
+event_namespace = "my_namespace"
+"#;
+
+        let result: Result<Config, _> = toml_str.parse();
+        assert!(result.is_err(), "Should fail when secret_key is missing");
+        assert!(result.unwrap_err().contains("Error parsing TOML"));
+    }
+
+    #[test]
+    fn test_platformx_empty_secret_key() {
+        let toml_str = r#"
+[[commands]]
+title = "Test Command"
+command = "echo test"
+
+[platformx]
+secret_key = ""
+"#;
+
+        let config: Config = toml_str
+            .parse()
+            .expect("Failed to parse config with empty secret_key");
+
+        assert!(config.platformx.is_some());
+        let platformx = config.platformx.unwrap();
+        assert_eq!(platformx.secret_key, "");
+    }
+
+    #[test]
+    fn test_platformx_clone() {
+        let platformx = PlatformXConfig {
+            secret_key: "test_key".to_string(),
+            event_namespace: Some("test_namespace".to_string()),
+        };
+
+        let cloned = platformx.clone();
+        assert_eq!(platformx.secret_key, cloned.secret_key);
+        assert_eq!(platformx.event_namespace, cloned.event_namespace);
+    }
 }
