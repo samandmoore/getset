@@ -5,7 +5,6 @@ use std::{collections::HashMap, time::Duration};
 
 const PLATFORMX_API_URL: &str = "https://api.getdx.com/events.track";
 
-#[derive(Clone)]
 pub struct PlatformXClient {
     config: PlatformXConfig,
     client: reqwest::Client,
@@ -150,5 +149,77 @@ pub fn get_globals() -> Globals {
         user_shell,
         github_username,
         git_email,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_test_globals() -> Globals {
+        Globals {
+            user_shell: "/bin/bash".to_string(),
+            github_username: "testuser".to_string(),
+            git_email: "test@example.com".to_string(),
+        }
+    }
+
+    fn create_test_config(namespace: Option<String>) -> PlatformXConfig {
+        PlatformXConfig {
+            secret_key: "test_secret_key".to_string(),
+            event_namespace: namespace,
+        }
+    }
+
+    #[test]
+    fn test_get_globals_returns_globals() {
+        // This test verifies that get_globals() returns a Globals struct
+        // The actual values will depend on the environment
+        let globals = get_globals();
+
+        // Just verify the fields exist and are not empty
+        // (they may be "unknown" if environment variables are not set)
+        assert!(!globals.user_shell.is_empty());
+        assert!(!globals.github_username.is_empty());
+        assert!(!globals.git_email.is_empty());
+    }
+
+    #[test]
+    fn test_platformx_client_new_with_default_namespace() {
+        let config = create_test_config(None);
+        let globals = create_test_globals();
+
+        let client = PlatformXClient::new(config.clone(), globals.clone());
+
+        assert_eq!(client.namespace, "getset");
+        assert_eq!(client.config.secret_key, config.secret_key);
+        assert_eq!(client.globals.user_shell, globals.user_shell);
+    }
+
+    #[test]
+    fn test_platformx_client_new_with_custom_namespace() {
+        let config = create_test_config(Some("custom_namespace".to_string()));
+        let globals = create_test_globals();
+
+        let client = PlatformXClient::new(config.clone(), globals.clone());
+
+        assert_eq!(client.namespace, "custom_namespace");
+        assert_eq!(client.config.secret_key, config.secret_key);
+    }
+
+    #[test]
+    fn test_platformx_client_with_empty_namespace() {
+        let config = create_test_config(Some("".to_string()));
+        let globals = create_test_globals();
+
+        let client = PlatformXClient::new(config, globals);
+
+        // Empty string should be used as-is, not replaced with default
+        assert_eq!(client.namespace, "");
+    }
+
+    #[test]
+    fn test_api_url_constant() {
+        assert_eq!(PLATFORMX_API_URL, "https://api.getdx.com/events.track");
     }
 }

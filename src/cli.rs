@@ -50,7 +50,6 @@ impl App {
 
         // Send start event if PlatformX is configured (non-blocking)
         if let Some(ref client) = platformx_client {
-            let client = client.clone();
             // ignore errors to avoid failing due to tracking
             let _ = client.send_start().await;
         }
@@ -114,9 +113,7 @@ impl App {
 
                     // Send error event if PlatformX is configured (non-blocking)
                     if let Some(ref client) = platformx_client {
-                        let client = client.clone();
                         let error_msg = e.clone();
-
                         // ignore errors to avoid failing due to tracking
                         let _ = client.send_error(elapsed, error_msg).await;
                     }
@@ -139,7 +136,6 @@ impl App {
 
         // Send complete event if PlatformX is configured (non-blocking)
         if let Some(ref client) = platformx_client {
-            let client = client.clone();
             // ignore errors to avoid failing due to tracking
             let _ = client.send_complete(elapsed).await;
         }
