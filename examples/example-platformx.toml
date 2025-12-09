@@ -1,0 +1,11 @@
+[[commands]]
+title = "List files"
+command = "ls -la"
+
+[[commands]]
+title = "Echo test"
+command = "echo Hello from getset with PlatformX"
+
+[platformx]
+secret_key = "your_secret_key_here"
+event_namespace = "myapp"  # Optional: defaults to "getset" if not specified
