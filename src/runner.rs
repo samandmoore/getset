@@ -45,13 +45,19 @@ fn print_command_result(cmd_entry: &CommandEntry, elapsed: Duration, success: bo
 }
 
 /// Run a command using PTY for better terminal support
-fn run_with_pty(cmd_entry: &CommandEntry) -> Result<(bool, Duration), String> {
+fn run_with_pty(cmd_entry: &CommandEntry, verbose: bool) -> Result<(bool, Duration), String> {
     let timer = Instant::now();
     let (_, pts) =
         pty_process::blocking::open().map_err(|e| format!("Failed to open PTY: {}", e))?;
 
+    let mut args: Vec<&str> = Vec::new();
+    if verbose {
+        args.push("-x");
+    }
+
     // Execute command through shell to support multiline scripts and shell features
     let mut child = pty_process::blocking::Command::new("sh")
+        .args(args)
         .arg("-c")
         .arg(&cmd_entry.command)
         .stdin(Stdio::inherit())
@@ -70,11 +76,17 @@ fn run_with_pty(cmd_entry: &CommandEntry) -> Result<(bool, Duration), String> {
 }
 
 /// Run a command without PTY (for non-terminal contexts)
-fn run_without_pty(cmd_entry: &CommandEntry) -> Result<(bool, Duration), String> {
+fn run_without_pty(cmd_entry: &CommandEntry, verbose: bool) -> Result<(bool, Duration), String> {
     let timer = Instant::now();
+
+    let mut args: Vec<&str> = Vec::new();
+    if verbose {
+        args.push("-x");
+    }
 
     // Execute command through shell to support multiline scripts and shell features
     let mut child = Command::new("sh")
+        .args(args)
         .arg("-c")
         .arg(&cmd_entry.command)
         .stdin(Stdio::inherit())
@@ -99,17 +111,17 @@ pub fn run_command(cmd_entry: &CommandEntry, verbose: bool) -> Result<Duration, 
     let (success, elapsed) = if should_use_pty() {
         // PTY is favored when available (in terminal contexts)
         // But if it fails, gracefully fall back to non-PTY mode
-        match run_with_pty(cmd_entry) {
+        match run_with_pty(cmd_entry, verbose) {
             Ok(result) => result,
             Err(e) if e.contains("Failed to open PTY") || e.contains("Failed to spawn command") => {
                 // PTY failed, fall back to non-PTY mode
-                run_without_pty(cmd_entry)?
+                run_without_pty(cmd_entry, verbose)?
             }
             Err(e) => return Err(e),
         }
     } else {
         // Fall back to non-PTY mode in non-terminal contexts
-        run_without_pty(cmd_entry)?
+        run_without_pty(cmd_entry, verbose)?
     };
 
     print_command_result(cmd_entry, elapsed, success);
@@ -166,7 +178,7 @@ mod tests {
             command: "echo 'non-pty test'".to_string(),
         };
 
-        let result = run_without_pty(&cmd);
+        let result = run_without_pty(&cmd, false);
         assert!(result.is_ok(), "Non-PTY command should succeed");
         let (success, _) = result.unwrap();
         assert!(success, "Command should return success");
@@ -179,7 +191,7 @@ mod tests {
             command: "exit 1".to_string(),
         };
 
-        let result = run_without_pty(&cmd);
+        let result = run_without_pty(&cmd, false);
         assert!(result.is_ok(), "Non-PTY command should return a result");
         let (success, _) = result.unwrap();
         assert!(!success, "Command should return failure");
