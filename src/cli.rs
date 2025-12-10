@@ -1,7 +1,7 @@
 use crate::config::{CommandEntry, Config};
 use crate::platformx::{self, PlatformXClient};
 use crate::runner;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use console::style;
 use std::path::PathBuf;
 use std::time::Instant;
@@ -10,6 +10,18 @@ use std::time::Instant;
 #[command(name = "getset")]
 #[command(about = "Run commands from a TOML file sequentially", long_about = None)]
 pub struct App {
+    #[command(subcommand)]
+    pub command: Commands,
+}
+
+#[derive(Subcommand)]
+pub enum Commands {
+    /// Run commands from a TOML file
+    Up(UpCommand),
+}
+
+#[derive(Parser)]
+pub struct UpCommand {
     /// Path to the TOML file containing commands (defaults to getset.toml)
     #[arg(default_value = "getset.toml")]
     pub file: PathBuf,
@@ -34,6 +46,14 @@ struct CommandResult {
 }
 
 impl App {
+    pub async fn run(self) -> Result<(), Box<dyn std::error::Error>> {
+        match self.command {
+            Commands::Up(cmd) => cmd.run().await,
+        }
+    }
+}
+
+impl UpCommand {
     pub async fn run(self) -> Result<(), Box<dyn std::error::Error>> {
         let config = Config::from_file(&self.file)?;
 

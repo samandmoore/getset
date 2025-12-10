@@ -21,10 +21,20 @@ fn test_help_output() {
             "Run commands from a TOML file sequentially",
         ))
         .stdout(predicate::str::contains("Usage:"))
+        .stdout(predicate::str::contains("up"));
+}
+
+#[test]
+fn test_up_subcommand_help() {
+    std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
+        .arg("--help")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Run commands from a TOML file"))
         .stdout(predicate::str::contains("--verbose"))
         .stdout(predicate::str::contains("--report"))
-        .stdout(predicate::str::contains("--step"))
-        .stdout(predicate::str::contains("--help"));
+        .stdout(predicate::str::contains("--step"));
 }
 
 #[test]
@@ -32,6 +42,7 @@ fn test_valid_file_execution() {
     let fixture = get_fixture_path("valid.toml");
 
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
         .arg(&fixture)
         .assert()
         .success()
@@ -46,6 +57,7 @@ fn test_invalid_file_error() {
     let fixture = get_fixture_path("invalid.toml");
 
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
         .arg(&fixture)
         .assert()
         .failure()
@@ -55,6 +67,7 @@ fn test_invalid_file_error() {
 #[test]
 fn test_nonexistent_file_error() {
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
         .arg("nonexistent-file-that-does-not-exist.toml")
         .assert()
         .failure()
@@ -69,6 +82,7 @@ fn test_verbose_flag_shows_command_text() {
     let fixture = get_fixture_path("verbose-test.toml");
 
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
         .arg("--verbose")
         .arg(&fixture)
         .assert()
@@ -82,6 +96,7 @@ fn test_verbose_flag_without_verbose() {
     let fixture = get_fixture_path("verbose-test.toml");
 
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
         .arg(&fixture)
         .assert()
         .success()
@@ -94,6 +109,7 @@ fn test_report_flag() {
     let fixture = get_fixture_path("valid.toml");
 
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
         .arg("--report")
         .arg(&fixture)
         .assert()
@@ -107,6 +123,7 @@ fn test_default_config_file() {
     let fixtures_dir = get_fixture_path(".");
 
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
         .current_dir(fixtures_dir)
         .assert()
         .success()
@@ -120,6 +137,7 @@ fn test_step_flag_single_match() {
     let fixture = get_fixture_path("step-test.toml");
 
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
         .arg("--step")
         .arg("production")
         .arg(&fixture)
@@ -138,6 +156,7 @@ fn test_step_flag_multiple_matches() {
     let fixture = get_fixture_path("step-test.toml");
 
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
         .arg("--step")
         .arg("build")
         .arg(&fixture)
@@ -160,6 +179,7 @@ fn test_step_flag_no_matches() {
     let fixture = get_fixture_path("step-test.toml");
 
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
         .arg("--step")
         .arg("nonexistent")
         .arg(&fixture)
@@ -175,6 +195,7 @@ fn test_step_flag_case_insensitive() {
     let fixture = get_fixture_path("step-test.toml");
 
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
         .arg("--step")
         .arg("PRODUCTION")
         .arg(&fixture)
@@ -189,6 +210,7 @@ fn test_step_flag_partial_match() {
     let fixture = get_fixture_path("step-test.toml");
 
     std::process::Command::new(assert_cmd::cargo::cargo_bin!("getset"))
+        .arg("up")
         .arg("--step")
         .arg("front")
         .arg(&fixture)

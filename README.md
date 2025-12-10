@@ -28,26 +28,26 @@ title = "Install gems"
 command = "bundle install"
 ```
 
-Then run `getset` with the path to your TOML file:
+Then run `getset up` with the path to your TOML file:
 
 ```bash
-getset bootstrap.toml
+getset up bootstrap.toml
 ```
 
 Or, if you name your file `getset.toml`, you can run it without any arguments:
 
 ```bash
-getset  # Uses getset.toml by default
+getset up  # Uses getset.toml by default
 ```
 
 ### Command line options
 
 ```bash
-getset                      # Run commands from getset.toml (default)
-getset <file>               # Run commands from a TOML file
-getset <file> --verbose     # Show command text while running
-getset <file> --report      # Show timing report at the end
-getset <file> --step <step> # Run only commands matching <STEP> (case-insensitive)
+getset up                      # Run commands from getset.toml (default)
+getset up <file>               # Run commands from a TOML file
+getset up <file> --verbose     # Show command text while running
+getset up <file> --report      # Show timing report at the end
+getset up <file> --step <step> # Run only commands matching <STEP> (case-insensitive)
 ```
 
 ### Keep on top of slow steps
@@ -55,7 +55,7 @@ getset <file> --step <step> # Run only commands matching <STEP> (case-insensitiv
 Run with performance report:
 
 ```bash
-getset setup.toml --report
+getset up setup.toml --report
 ```
 
 This will show a timing breakdown at the end:
