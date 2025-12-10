@@ -2,6 +2,8 @@ use crate::config::{CommandEntry, Config};
 use crate::platformx::{self, PlatformXClient};
 use crate::runner;
 use clap::{Parser, Subcommand};
+use color_eyre::Section;
+use color_eyre::eyre::{Result, eyre};
 use console::style;
 use std::path::PathBuf;
 use std::time::Instant;
@@ -46,7 +48,7 @@ struct CommandResult {
 }
 
 impl App {
-    pub async fn run(self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn run(self) -> Result<()> {
         match self.command {
             Commands::Up(cmd) => cmd.run().await,
         }
@@ -54,7 +56,7 @@ impl App {
 }
 
 impl UpCommand {
-    pub async fn run(self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn run(self) -> Result<()> {
         let config = Config::from_file(&self.file)?;
 
         // Get default metadata for telemetry
@@ -86,12 +88,11 @@ impl UpCommand {
                 .collect();
 
             if matches.is_empty() {
-                eprintln!(
+                return Err(eyre!(
                     "{} No steps found matching '{}'",
                     style("Error:").red().bold(),
                     step_filter
-                );
-                std::process::exit(1);
+                ));
             }
 
             if matches.len() > 1 {
@@ -124,11 +125,6 @@ impl UpCommand {
                 }
                 Err(e) => {
                     let elapsed = timer.elapsed();
-                    eprintln!("\n{} A command failed", style("Error:").red().bold(),);
-
-                    if self.verbose {
-                        eprintln!("{}", style(&e).red());
-                    }
 
                     if let Some(ref client) = platformx_client {
                         let error_msg = e.clone();
@@ -136,7 +132,7 @@ impl UpCommand {
                         let _ = client.send_error(elapsed, error_msg).await;
                     }
 
-                    std::process::exit(1);
+                    return Err(eyre!("A command failed").with_note(|| e));
                 }
             }
         }

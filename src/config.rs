@@ -1,3 +1,4 @@
+use color_eyre::eyre::{Report, Result, eyre};
 use serde::Deserialize;
 use std::fs;
 use std::path::Path;
@@ -23,20 +24,19 @@ pub struct CommandEntry {
 
 impl Config {
     /// Load and parse a TOML configuration file
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, String> {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path_ref = path.as_ref();
         let toml_content = fs::read_to_string(path_ref)
-            .map_err(|e| format!("Error reading file '{}': {}", path_ref.display(), e))?;
+            .map_err(|e| eyre!("Error reading file '{}': {}", path_ref.display(), e))?;
         toml_content.parse()
     }
 }
 
 impl FromStr for Config {
-    type Err = String;
-
+    type Err = Report;
     /// Parse a TOML configuration from a string
     fn from_str(toml_content: &str) -> Result<Self, Self::Err> {
-        toml::from_str(toml_content).map_err(|e| format!("Error parsing TOML: {}", e))
+        toml::from_str(toml_content).map_err(|e| eyre!("Error parsing TOML: {}", e))
     }
 }
 
@@ -103,7 +103,12 @@ title = "Missing command field"
 
         let result: Result<Config, _> = invalid_toml.parse();
         assert!(result.is_err(), "Should fail when command field is missing");
-        assert!(result.unwrap_err().contains("Error parsing TOML"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Error parsing TOML")
+        );
     }
 
     #[test]
@@ -116,21 +121,36 @@ command = "echo test"
 
         let result: Result<Config, _> = malformed_toml.parse();
         assert!(result.is_err(), "Should fail with malformed TOML");
-        assert!(result.unwrap_err().contains("Error parsing TOML"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Error parsing TOML")
+        );
     }
 
     #[test]
     fn test_load_from_nonexistent_file() {
         let result = Config::from_file("tests/fixtures/nonexistent.toml");
         assert!(result.is_err(), "Should fail when file doesn't exist");
-        assert!(result.unwrap_err().contains("Error reading file"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Error reading file")
+        );
     }
 
     #[test]
     fn test_load_from_invalid_file() {
         let result = Config::from_file("tests/fixtures/invalid_config.toml");
         assert!(result.is_err(), "Should fail with invalid config file");
-        assert!(result.unwrap_err().contains("Error parsing TOML"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Error parsing TOML")
+        );
     }
 
     #[test]
@@ -205,7 +225,12 @@ event_namespace = "my_namespace"
 
         let result: Result<Config, _> = toml_str.parse();
         assert!(result.is_err(), "Should fail when secret_key is missing");
-        assert!(result.unwrap_err().contains("Error parsing TOML"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Error parsing TOML")
+        );
     }
 
     #[test]
